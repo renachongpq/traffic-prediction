@@ -1,4 +1,4 @@
-# Traffic Density Prediction from LTA Images & Speedbands
+# Traffic Prediction from LTA Images & Speedbands
 Currently a work in progress! This is a project for DSA3101 (Data Science in Practice)
 
 ## Background
