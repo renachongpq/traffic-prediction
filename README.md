@@ -5,7 +5,7 @@ Currently a work in progress! This is a project for DSA3101 (Data Science in Pra
 Based on traffic images and speedbands obtained from LTA Datamall (https://datamall.lta.gov.sg/content/datamall/en/dynamic-data.html), we estimate the traffic density and recommend users if they should travel along a certain road for a chosen specific day & time range
 
 ## Workflow Overview
-1. Image Enhancement
+1. Making API calls to obtain traffic images, speedbands and incidents
 2. Selecting ROI for Traffic Images
-3. Vehicle Detection for Traffic Images
+3. Vehicle Detection & Counting for Traffic Images
 4. Model for Traffic Prediction
