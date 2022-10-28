@@ -8,7 +8,7 @@ Continuation by: @renachongpq @MingFengC
 ## Background
 Based on traffic images, speedbands and incidents obtained from [LTA Datamall](https://datamall.lta.gov.sg/content/datamall/en/dynamic-data.html), we estimate the traffic density for live data and predict if there is a jam on a particular road
 
-## Workflow Overview
+## Backend Model Workflow Overview
 1. Making API calls to obtain traffic images, speedbands and incidents
 2. Selecting ROI for Traffic Images
 3. Vehicle Detection & Counting for Traffic Images
