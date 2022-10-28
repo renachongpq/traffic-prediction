@@ -1,6 +1,7 @@
 # Traffic Prediction from LTA Data
 Currently a work in progress! This is a project for DSA3101 (Data Science in Practice)
 Project by: @MingFengC @renachongpq @acakebro @RebeccaWam
+Continuation by: @renachongpq @MingFengC
 
 ## Background
 Based on traffic images, speedbands and incidents obtained from [LTA Datamall](https://datamall.lta.gov.sg/content/datamall/en/dynamic-data.html), we estimate the traffic density for live data and predict if there is a jam on a particular road
