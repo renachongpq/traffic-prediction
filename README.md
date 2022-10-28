@@ -1,6 +1,8 @@
 # Traffic Prediction from LTA Data
 Currently a work in progress! This is a project for DSA3101 (Data Science in Practice)
+
 Project by: @MingFengC @renachongpq @acakebro @RebeccaWam
+
 Continuation by: @renachongpq @MingFengC
 
 ## Background
