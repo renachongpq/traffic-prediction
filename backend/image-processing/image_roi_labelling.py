@@ -11,13 +11,14 @@ import pandas as pd
 
 class ShapeCoords:
     def __init__(self, img):
-        self.points = [] # store image coordinates of mouse clicks on image
+        self.points = []  # store image coordinates of mouse clicks on image
         self.img = img
 
     def click_event(self, event, x, y, flags, params):
         # checking for mouse clicks, display in shell if found
         if event == cv2.EVENT_LBUTTONDOWN or event == cv2.EVENT_RBUTTONDOWN:
-            self.points.append((x, y)) # record image coordinates selected by mouse click
+            # record image coordinates selected by mouse click
+            self.points.append((x, y))
 
             # displaying the coordinates on the image window
             font = cv2.FONT_HERSHEY_SIMPLEX
@@ -57,10 +58,11 @@ class ImageLabel:
                 # fit image to window
                 cv2.namedWindow('image', cv2.WINDOW_NORMAL)
                 cv2.setMouseCallback('image', shape_coords.click_event)
-                cv2.imshow('image', img) # show image to crop ROI
+                cv2.imshow('image', img)  # show image to crop ROI
                 cv2.waitKey()
                 cv2.destroyAllWindows()
-                road_name = input('Enter the road direction: ').strip().upper() # input road direction of ROI in terminal
+                # input road direction of ROI in terminal
+                road_name = input('Enter the road direction: ').strip().upper()
                 camera_location = [camera_id, shape_coords.points, road_name]
                 result_list.append(camera_location)
         result_df = pd.DataFrame(result_list, columns=[
@@ -71,7 +73,7 @@ class ImageLabel:
 
 
 label_file = 'label_filters.csv'
-images = 'sharepoint/2022_01_05_22_00/Split/4/*'
+images = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\temp'
 ImageLabel = ImageLabel(label_file, images)
 ImageLabel.label()
 
