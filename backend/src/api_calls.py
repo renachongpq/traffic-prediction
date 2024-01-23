@@ -17,9 +17,11 @@ class ApiCall:
     def __init__(self, parent_dir):
         self.parent_dir = parent_dir
         os.chdir(parent_dir)
-        self.folder = os.path.join(self.parent_dir, "assets") # folder where data retrieve are stored
+        # folder where data retrieve are stored
+        self.folder = os.path.join(self.parent_dir, "assets")
         if os.path.isdir(self.folder):
-            shutil.rmtree(self.folder) # clear old data from folder before making api call
+            # clear old data from folder before making api call
+            shutil.rmtree(self.folder)
         os.makedirs(self.folder)
 
     def api_get_json(self, uri, path):
@@ -28,7 +30,7 @@ class ApiCall:
         """
         # authentication parameters
         headers = {
-            "AccountKey": "AO4qMbK3S7CWKSlplQZqlA==",
+            "AccountKey": "Qzo6MFd/SXWzO6fjzlmGvg==",
             "accept": "application/json",
         }  # this is by default
 
@@ -38,7 +40,8 @@ class ApiCall:
         body = ""
 
         h = http.Http()  # get handle to http
-        response, content = h.request(target.geturl(), method, body, headers) # retrieve data
+        response, content = h.request(
+            target.geturl(), method, body, headers)  # retrieve data
 
         # get data from content
         jsonObj = json.loads(content)  # dictonary
