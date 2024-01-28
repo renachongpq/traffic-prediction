@@ -11,10 +11,10 @@ class Main:
         # downloads into api_data folder in your specified dir
         api_call.download_images()
 
-        weights = dir + '/best.pt'
+        weights = dir + '/utils/vehicle_detector.pt'
         images_dir = dir + '/assets'
-        roi_df = dir + '/roi_masks.csv'
-        lat_long = dir + '/camera_id_lat_long.csv'
+        roi_df = dir + '/utils/roi_masks.csv'
+        lat_long = dir + '/utils/camera_id_lat_long.csv'
 
         # change back to directory containing dnn weights
         os.chdir(dir)
