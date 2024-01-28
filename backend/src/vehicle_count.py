@@ -1,27 +1,21 @@
 import cv2
-from glob import glob
+import os
 from vehicle_detector import VehicleDetector
 import pandas as pd
 import ast
 import numpy as np
 from math import radians, cos, sin, asin, sqrt
 import datetime
+from ultralytics import YOLO
 
 
 class VehicleCount:
-    def __init__(self, images, image_roi_df, cam_lat_long, speedband_lat_long_df, speedband_cam_mapping, incidents_df):
-        self.vehicle_detector = VehicleDetector()
-        self.images = glob(images)
+    def __init__(self, weights, images, image_roi_df, cam_lat_long):
+        self.images = [os.path.join(images, image)
+                       for image in os.listdir(images)]
         self.image_roi_df = pd.read_csv(image_roi_df)
         self.cam_lat_long = pd.read_csv(cam_lat_long)
-        self.speedband_lat_long_df = pd.read_csv(
-            speedband_lat_long_df)
-        self.speedband_cam_mapping = pd.read_csv(speedband_cam_mapping)
-        self.incidents_df = pd.read_csv(incidents_df)
-        self.incidents_df.rename(
-            columns={'Latitude': 'AvgLat', 'Longitude': 'AvgLon'}, inplace=True)
-        self.incidents_lat_long = self.incidents_df.iloc[:, 1:3].to_dict(
-            "records")
+        self.model = YOLO(weights)
 
     def __roi(self, img, coords):
         x = int(img.shape[1])
@@ -109,8 +103,8 @@ class VehicleCount:
     def predict_vehicle_count(self):
         result_list = []
         for img_path in self.images:
-            camera_id = int(img_path.split("/")[-1].split("_")[0])
-            timestamp = img_path.split("/")[-1].split("_")[2]
+            camera_id = int(img_path.split("\\")[-1].split("_")[0])
+            timestamp = img_path.split("\\")[-1].split("_")[2]
             image_datetime = datetime.datetime.strptime(
                 timestamp, "%Y%m%d%H%M%S")
             is_peak = self.__is_peak(image_datetime)
@@ -122,44 +116,27 @@ class VehicleCount:
                 .iloc[:, -2:]
                 .to_dict("records")[0]
             )
-            # Index to retrieve the average speed from speedband df
-            speedband_link_id = self.speedband_cam_mapping[
-                self.speedband_cam_mapping.CameraID == camera_id].iloc[0, -1]
-            avg_speed = self.speedband_lat_long_df[self.speedband_lat_long_df.LinkID ==
-                                                   speedband_link_id].iloc[0, 7]
-            closest_incident = self.__closest(
-                self.incidents_lat_long, cam_coords)
-            incident_distance = closest_incident[2]
-            incident = 0
-            if incident_distance <= 200:
-                incident = 1
             img = cv2.imread(img_path)
             for i in range(len(rois)):
                 roi_coords = ast.literal_eval(rois.iloc[i, 1])
                 direction = rois.iloc[i, 2]
                 roi_img = self.__roi(img, roi_coords)
-                vehicle_boxes = self.vehicle_detector.detect_vehicles(roi_img)
-                vehicle_count = len(vehicle_boxes)
+                result = self.model.predict(roi_img, conf=0.5, iou=0.8)[0]
+                vehicle_count = len(result.boxes.xyxy)
                 density = vehicle_count / (0.100 * 3)
-                # Approximate length of road to be 100m with an average of 3 lanes
-                jam = 0
-                if avg_speed <= 30 or density >= 23.33:
-                    jam = 1
+                jam = 1 if density >= 23.33 else 0
                 result_list.append(
                     [
                         camera_id,
                         direction,
                         vehicle_count,
                         density,
-                        avg_speed,
                         image_datetime.date(),
                         image_datetime.time(),
                         cam_coords.get("Latitude"),
                         cam_coords.get("Longitude"),
                         is_weekday,
                         is_peak,
-                        incident,
-                        incident_distance,
                         jam
                     ]
                 )
@@ -170,16 +147,27 @@ class VehicleCount:
                 "Direction",
                 "Vehicle_Count",
                 "Density",
-                "Average_Speed",
                 "Date",
                 "Time",
                 "Latitude",
                 "Longitude",
                 "Is_Weekday",
                 "Is_Peak",
-                "Incident",
-                "Closest_Incident_Distance",
                 "Jam"
             ],
         )
         return result_df
+
+"""
+images_dir = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\data\images\test'
+roi_df = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\image-processing\roi_masks.csv'
+lat_long = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\src\camera_id_lat_long.csv'
+weights = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\results\runs\detect\train3\weights\best.pt'
+
+# change back to directory containing dnn weights
+vc = VehicleCount(weights, images_dir, roi_df, lat_long)
+traffic_stats = vc.predict_vehicle_count()
+with open('traffic_stats.csv', 'a') as f:
+    traffic_stats.to_csv(f, mode='a', index=False,
+                         header=f.tell() == 0)
+"""
