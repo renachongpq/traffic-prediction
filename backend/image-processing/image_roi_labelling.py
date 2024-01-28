@@ -5,7 +5,7 @@ ROI coordinates are stored in csv file Image_ROI.csv, 1 record per road directio
 """
 import cv2
 import numpy as np
-from glob import glob
+import os
 import pandas as pd
 
 
@@ -30,7 +30,8 @@ class ShapeCoords:
 
 class ImageLabel:
     def __init__(self, label_file, images):
-        self.img_paths = glob(images)
+        self.img_paths = [os.path.join(images, image)
+                          for image in os.listdir(images)]
         self.result_list = []
         self.labels_dict = None
         self.__process_labels(label_file)
@@ -49,7 +50,7 @@ class ImageLabel:
         result_list = []
         for img_path in self.img_paths:
             camera_id = int(img_path.split(
-                '/')[-1].split('.')[0].split('_')[0])
+                '\\')[-1].split('.')[0].split('_')[0])
             labels = self.labels_dict.get(camera_id)
             img = cv2.imread(img_path)
             camera_location = []
@@ -67,14 +68,15 @@ class ImageLabel:
                 result_list.append(camera_location)
         result_df = pd.DataFrame(result_list, columns=[
                                  'Camera_Id', 'ROI', 'Direction'])
-        result_df.to_csv('Image_ROI5.csv', index=False)
+        result_df.to_csv('roi_masks2.csv', index=False)
 
 ### TESTS ###
 
-
-label_file = 'label_filters.csv'
-images = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\temp'
+"""
+label_file = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\image-processing\label_filters.csv'
+images = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\classifier'
 ImageLabel = ImageLabel(label_file, images)
 ImageLabel.label()
+"""
 
 #############
