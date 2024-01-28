@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 
 class VehicleCount:
     def __init__(self, weights, images, image_roi_df, cam_lat_long, dir):
-        self.images = [os.path.join(images, image)
-                       for image in os.listdir(images)]
+        self.images_dir = images
+        self.images = [os.path.join(self.images_dir, image)
+                       for image in os.listdir(self.images_dir)]
         self.image_roi_df = pd.read_csv(image_roi_df)
         self.cam_lat_long = pd.read_csv(cam_lat_long)
         self.model = YOLO(weights)
@@ -102,9 +103,9 @@ class VehicleCount:
         return 0
 
     def __save_jam_info(self, camera_id, direction, jam):
-        directory = fr"{self.dir}\{direction}"
+        directory = f"{self.images_dir}/{direction}"
         os.makedirs(directory, exist_ok=True)
-        with open(fr"{directory}\{direction}_{camera_id}_jam_info.txt", 'a') as f:
+        with open(fr"{directory}/{direction}_{camera_id}_jam_info.txt", 'a') as f:
             f.write(
                 f"Camera_ID: {camera_id}, Direction: {direction}, Jam: {jam}\n")
 
@@ -113,16 +114,16 @@ class VehicleCount:
         for box in boxes:
             x1, y1, x2, y2 = map(int, box[:4])
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        directory = fr"{self.dir}\{direction}"
+        directory = f"{self.images_dir}/{direction}"
         os.makedirs(directory, exist_ok=True)
-        cv2.imwrite(fr"{directory}\{direction}_{camera_id}_bbox.jpg", img)
+        cv2.imwrite(fr"{directory}/{direction}_{camera_id}_bbox.jpg", img)
         self.__save_jam_info(camera_id, direction, jam)
 
     def predict_vehicle_count(self):
         result_list = []
         for img_path in self.images:
-            camera_id = int(img_path.split("\\")[-1].split("_")[0])
-            timestamp = img_path.split("\\")[-1].split("_")[2]
+            camera_id = int(img_path.split("/")[-1].split("_")[0])
+            timestamp = img_path.split("/")[-1].split("_")[2]
             image_datetime = datetime.datetime.strptime(
                 timestamp, "%Y%m%d%H%M%S")
             is_peak = self.__is_peak(image_datetime)
