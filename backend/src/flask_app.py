@@ -11,6 +11,8 @@ import urllib
 import urllib.request
 from urllib.parse import urlparse
 import httplib2 as http  # external library
+from io import BytesIO
+import zipfile
 
 app = Flask(__name__)
 
@@ -19,13 +21,46 @@ app = Flask(__name__)
 def return_live_image():
     camera_id = request.args.get('camera_id')
     images = './assets'
-    for img_path in [os.path.join(images, image)
-                     for image in os.listdir(images)]:
+    img_paths = [os.path.join(images, image) for image in os.listdir(
+        images) if image.endswith(".jpg")]
+    for img_path in img_paths:
         img_id = int(img_path.split("/")[-1].split("_")[0])
         if int(camera_id) == img_id:
             return send_file(img_path)
 
 # to be updated when finalised
+
+
+@app.route("/roi_image", methods=["GET"])
+def return_roi_image(road_direction):
+    road_direction = road_direction.replace("/", "_")
+    images = f'./assets/{road_direction}'
+    img_paths = [os.path.join(images, image) for image in os.listdir(
+        images) if image.endswith(".jpg")]
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for img_path in img_paths:
+            zip_file.write(img_path, os.path.basename(img_path))
+
+    zip_buffer.seek(0)
+
+    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, attachment_filename=f"{road_direction}_images.zip")
+
+
+@app.route("/roi_jam_info", methods=["GET"])
+def return_roi_jam_info(road_direction):
+    road_direction = road_direction.replace("/", "_")
+    texts = f'./assets/{road_direction}'
+    text_paths = [os.path.join(texts, text) for text in os.listdir(
+        texts) if text.endswith(".txt")]
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for text_path in text_paths:
+            zip_file.write(text_path, os.path.basename(text_path))
+
+    zip_buffer.seek(0)
+
+    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, attachment_filename=f"{road_direction}_texts.zip")
 
 
 """
