@@ -23,7 +23,3 @@ class Main:
         with open('traffic_stats.csv', 'a') as f:
             traffic_stats.to_csv(f, mode='a', index=False,
                                  header=f.tell() == 0)
-
-
-main = Main()
-main.update_stats()
