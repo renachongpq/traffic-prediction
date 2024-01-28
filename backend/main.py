@@ -1,5 +1,5 @@
-from api_calls import ApiCall
-from vehicle_count import VehicleCount
+from src.api_calls import ApiCall
+from src.vehicle_count import VehicleCount
 import os
 
 
@@ -11,15 +11,19 @@ class Main:
         # downloads into api_data folder in your specified dir
         api_call.download_images()
 
-        weights = dir + 'best.pt'
-        images_dir = dir + '/assets/*.jpg'
-        roi_df = dir + '/Image_ROI.csv'
+        weights = dir + '/best.pt'
+        images_dir = dir + '/assets'
+        roi_df = dir + '/roi_masks.csv'
         lat_long = dir + '/camera_id_lat_long.csv'
 
         # change back to directory containing dnn weights
-        os.chdir('/app')
-        vc = VehicleCount(weights, images_dir, roi_df, lat_long)
+        os.chdir(dir)
+        vc = VehicleCount(weights, images_dir, roi_df, lat_long, dir)
         traffic_stats = vc.predict_vehicle_count()
         with open('traffic_stats.csv', 'a') as f:
             traffic_stats.to_csv(f, mode='a', index=False,
                                  header=f.tell() == 0)
+
+
+main = Main()
+main.update_stats()
