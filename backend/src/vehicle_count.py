@@ -1,21 +1,23 @@
 import cv2
 import os
-from vehicle_detector import VehicleDetector
 import pandas as pd
 import ast
 import numpy as np
 from math import radians, cos, sin, asin, sqrt
 import datetime
 from ultralytics import YOLO
+import matplotlib.pyplot as plt
 
 
 class VehicleCount:
-    def __init__(self, weights, images, image_roi_df, cam_lat_long):
-        self.images = [os.path.join(images, image)
-                       for image in os.listdir(images)]
+    def __init__(self, weights, images, image_roi_df, cam_lat_long, dir):
+        self.images_dir = images
+        self.images = [os.path.join(self.images_dir, image)
+                       for image in os.listdir(self.images_dir)]
         self.image_roi_df = pd.read_csv(image_roi_df)
         self.cam_lat_long = pd.read_csv(cam_lat_long)
         self.model = YOLO(weights)
+        self.dir = dir
 
     def __roi(self, img, coords):
         x = int(img.shape[1])
@@ -100,11 +102,28 @@ class VehicleCount:
             return 1
         return 0
 
+    def __save_jam_info(self, camera_id, direction, jam):
+        directory = f"{self.images_dir}/{direction}"
+        os.makedirs(directory, exist_ok=True)
+        with open(fr"{directory}/{direction}_{camera_id}_jam_info.txt", 'a') as f:
+            f.write(
+                f"Camera_ID: {camera_id}, Direction: {direction}, Jam: {jam}\n")
+
+    def __plot_bounding_box(self, img, direction, camera_id, boxes, jam):
+        direction = direction.replace("/", "_")
+        for box in boxes:
+            x1, y1, x2, y2 = map(int, box[:4])
+            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        directory = f"{self.images_dir}/{direction}"
+        os.makedirs(directory, exist_ok=True)
+        cv2.imwrite(fr"{directory}/{direction}_{camera_id}_bbox.jpg", img)
+        self.__save_jam_info(camera_id, direction, jam)
+
     def predict_vehicle_count(self):
         result_list = []
         for img_path in self.images:
-            camera_id = int(img_path.split("\\")[-1].split("_")[0])
-            timestamp = img_path.split("\\")[-1].split("_")[2]
+            camera_id = int(img_path.split("/")[-1].split("_")[0])
+            timestamp = img_path.split("/")[-1].split("_")[2]
             image_datetime = datetime.datetime.strptime(
                 timestamp, "%Y%m%d%H%M%S")
             is_peak = self.__is_peak(image_datetime)
@@ -125,6 +144,8 @@ class VehicleCount:
                 vehicle_count = len(result.boxes.xyxy)
                 density = vehicle_count / (0.100 * 3)
                 jam = 1 if density >= 23.33 else 0
+                self.__plot_bounding_box(
+                    roi_img, direction, camera_id, result.boxes.xyxy, jam)
                 result_list.append(
                     [
                         camera_id,
@@ -157,17 +178,3 @@ class VehicleCount:
             ],
         )
         return result_df
-
-"""
-images_dir = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\data\images\test'
-roi_df = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\image-processing\roi_masks.csv'
-lat_long = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\src\camera_id_lat_long.csv'
-weights = r'C:\Users\User\Desktop\DSO\traffic-prediction\backend\results\runs\detect\train3\weights\best.pt'
-
-# change back to directory containing dnn weights
-vc = VehicleCount(weights, images_dir, roi_df, lat_long)
-traffic_stats = vc.predict_vehicle_count()
-with open('traffic_stats.csv', 'a') as f:
-    traffic_stats.to_csv(f, mode='a', index=False,
-                         header=f.tell() == 0)
-"""
