@@ -3,8 +3,8 @@ import ast
 import folium
 
 def get_camera_lat_long(road_selection):
-    road_camera_df = pd.read_csv('./backend/src/road_camera_id.csv')
-    cam_lat_long_df = pd.read_csv('./backend/src/camera_id_lat_long.csv')
+    road_camera_df = pd.read_csv('./utils/road_camera_id.csv')
+    cam_lat_long_df = pd.read_csv('./utils/camera_id_lat_long.csv')
 
     camera_id = road_camera_df[road_camera_df['road_direction'] ==  road_selection]['camera_id'].values[0]
     camera_id = ast.literal_eval(camera_id) # convert string representation of list to list
