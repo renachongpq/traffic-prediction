@@ -1,8 +1,7 @@
 from flask import Flask, jsonify, request, send_file
 import pandas as pd
-from glob import glob
-from main import Main
-from RandomForest import RandomForestModel
+import os
+from backend.main import Main
 import time
 import datetime
 import pickle
@@ -19,7 +18,9 @@ app = Flask(__name__)
 @app.route("/live_image", methods=["GET"])
 def return_live_image():
     camera_id = request.args.get('camera_id')
-    for img_path in glob('./assets/*.jpg'):
+    images = './assets'
+    for img_path in [os.path.join(images, image)
+                     for image in os.listdir(images)]:
         img_id = int(img_path.split("/")[-1].split("_")[0])
         if int(camera_id) == img_id:
             return send_file(img_path)
@@ -27,12 +28,14 @@ def return_live_image():
 # to be updated when finalised
 
 
+"""
 @app.route("/stats", methods=["GET"])
 def get_stats():
     camera_id = request.args.get('camera_id')
     df = pd.read_csv('traffic_stats.csv')
     match_df = df.loc[df['Camera_Id'] == int(camera_id)]
-    result_df = match_df[['Density', 'Average_Speed','Direction','Jam','Date','Time']]
+    result_df = match_df[['Density', 'Average_Speed',
+                          'Direction', 'Jam', 'Date', 'Time']]
     return jsonify(result_df.to_dict(orient="records"))
 
 # for past data
@@ -59,6 +62,7 @@ def make_prediction():
         return jsonify({'prediction': 'No Jam'})
     elif result == 1:
         return jsonify({'prediction': 'Jam'})
+"""
 
 
 @app.route("/")
@@ -74,13 +78,13 @@ def run_main():
         time_wait = 15
         time.sleep(time_wait * 60)
 
+
+"""
 @app.route("/incidents")
 def get_incidents():
     traffic_incidents = pd.read_csv('./assets/incidents.csv')
     return jsonify(traffic_incidents.to_dict(orient="records"))
+"""
 
-        
-        
-        
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
