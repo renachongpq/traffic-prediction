@@ -13,6 +13,7 @@ COPY roi_masks.csv utils/roi_masks.csv
 COPY camera_id_lat_long.csv utils/camera_id_lat_long.csv
 COPY vehicle_detector.pt utils/vehicle_detector.pt
 COPY __init__.py src/__init__.py
+COPY traffic_stats.csv traffic_stats.csv
 
 ENV FLASK_APP flask_app
 ENTRYPOINT ["/usr/bin/python3", "/app/flask_app.py"]

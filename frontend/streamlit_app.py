@@ -9,6 +9,7 @@ import time
 import zipfile
 import io
 from datetime import datetime
+import shutil
 
 # to run this page: streamlit run streamlit_app.py
 st.set_page_config(layout="wide")
@@ -40,6 +41,9 @@ def fetch_traffic_stats(flask_url):
 def download_assets():
     global last_update_time
     try:
+        # Check if assets folder exists and clear it if it does
+        if os.path.exists("assets"):
+            shutil.rmtree("assets")
         response = requests.get(f'{flask_url}/assets')
         if response.status_code == 200:
             # Save the zip file
@@ -106,7 +110,7 @@ traffic_stats = fetch_traffic_stats(flask_url)
 if traffic_stats is None:
     st.error("Failed to fetch traffic stats. Please try again later.")
 
-download_assets()
+# download_assets()
 
 # ----------------------- sidebar ---------------------------
 

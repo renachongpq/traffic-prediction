@@ -167,7 +167,7 @@ start_run_main_thread()
 
 """
 
-
+"""
 def run_main_job():
     print("Running run_main job...")
     run_main()
@@ -188,6 +188,7 @@ def run_scheduler():
 # Start the scheduler in a separate thread
 scheduler_thread = threading.Thread(target=run_scheduler)
 scheduler_thread.start()
+"""
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
