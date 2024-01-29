@@ -1,0 +1,1 @@
+Camera_ID: 1005, Direction: KPE (ECP), Jam: 0

@@ -1,0 +1,1 @@
+Camera_ID: 1502, Direction: MCE (AYE), Jam: 0

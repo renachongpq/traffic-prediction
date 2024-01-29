@@ -1,0 +1,1 @@
+Camera_ID: 1703, Direction: PIE (TUAS), Jam: 0

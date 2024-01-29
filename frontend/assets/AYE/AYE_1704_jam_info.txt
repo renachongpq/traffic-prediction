@@ -1,0 +1,1 @@
+Camera_ID: 1704, Direction: AYE, Jam: 0

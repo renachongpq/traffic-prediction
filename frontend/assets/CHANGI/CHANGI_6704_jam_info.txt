@@ -1,0 +1,1 @@
+Camera_ID: 6704, Direction: CHANGI, Jam: 1

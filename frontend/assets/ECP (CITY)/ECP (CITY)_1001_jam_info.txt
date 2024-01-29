@@ -1,0 +1,1 @@
+Camera_ID: 1001, Direction: ECP (CITY), Jam: 0

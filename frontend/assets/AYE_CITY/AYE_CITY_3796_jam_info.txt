@@ -1,0 +1,1 @@
+Camera_ID: 3796, Direction: AYE_CITY, Jam: 0

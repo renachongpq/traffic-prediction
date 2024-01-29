@@ -1,0 +1,1 @@
+Camera_ID: 1503, Direction: MCE (ECP), Jam: 0

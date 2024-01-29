@@ -1,0 +1,1 @@
+Camera_ID: 4713, Direction: JOHOR, Jam: 0

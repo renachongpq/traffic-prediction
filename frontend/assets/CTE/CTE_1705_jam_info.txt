@@ -1,0 +1,1 @@
+Camera_ID: 1705, Direction: CTE, Jam: 1

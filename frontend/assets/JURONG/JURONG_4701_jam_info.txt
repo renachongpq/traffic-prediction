@@ -1,0 +1,1 @@
+Camera_ID: 4701, Direction: JURONG, Jam: 0

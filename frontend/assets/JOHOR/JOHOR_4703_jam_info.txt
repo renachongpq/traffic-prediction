@@ -1,0 +1,1 @@
+Camera_ID: 4703, Direction: JOHOR, Jam: 1

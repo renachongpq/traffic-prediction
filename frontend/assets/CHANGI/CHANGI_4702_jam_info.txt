@@ -1,0 +1,1 @@
+Camera_ID: 4702, Direction: CHANGI, Jam: 1
