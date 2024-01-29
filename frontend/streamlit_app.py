@@ -4,16 +4,61 @@ from streamlit_folium import folium_static
 import pandas as pd
 import re
 import os
+import requests
+import time
+import zipfile
+import io
 
 # to run this page: streamlit run streamlit_app.py
+st.set_page_config(layout="wide")
+
+flask_url = "http://backend:5000"
 
 # ----------------------- csv files ---------------------------
 road_camera_id = pd.read_csv('./utils/road_camera_id.csv')
-traffic_stats = pd.read_csv('traffic_stats.csv')
+
+
+def fetch_traffic_stats(flask_url):
+    try:
+        response = requests.get(f'{flask_url}/traffic_stats')
+        if response.status_code == 200:
+            # Parse CSV data into a DataFrame
+            traffic_stats_df = pd.read_csv(io.BytesIO(response.content))
+            return traffic_stats_df
+        else:
+            st.error(
+                f"Failed to fetch traffic stats. Status code: {response.status_code}")
+            return None
+    except Exception as e:
+        st.error(f"Error fetching traffic stats: {str(e)}")
+        return None
+
+
+def download_original_images():
+    try:
+        response = requests.get(f'{flask_url}/assets')
+        if response.status_code == 200:
+            # Save the zip file
+            with open("assets.zip", "wb") as f:
+                f.write(response.content)
+            # Extract the zip file
+            with zipfile.ZipFile("assets.zip", "r") as zip_ref:
+                zip_ref.extractall("assets")
+            st.success("Original images downloaded and extracted successfully.")
+        else:
+            st.error(
+                f"Failed to download original images. Status code: {response.status_code}")
+    except Exception as e:
+        st.error(f"Error downloading original images: {str(e)}")
+
+
+# Fetch traffic stats with retries
+traffic_stats = fetch_traffic_stats(flask_url)
+
+if traffic_stats is None:
+    st.error("Failed to fetch traffic stats. Please try again later.")
 
 # -------------------------------------------------------------
-
-st.set_page_config(layout="wide")
 
 st.sidebar.title('Traffic Prediction')
 
@@ -25,28 +70,36 @@ major_columns = st.columns((12, 8), gap='large')
 
 with major_columns[0]:
     roads = road_camera_id['road_direction'].values.tolist()
-    road_selection = st.selectbox("**Road Direction**", roads, index=0, placeholder='Select road direction to view traffic images')
+    road_selection = st.selectbox("**Road Direction**", roads, index=0,
+                                  placeholder='Select road direction to view traffic images')
     image_columns = st.columns(2)
-    
+
     # display traffic images
-    folder_road_selection = road_selection.replace('/', '_') # to match folder naming
-    original_images = [f for f in os.listdir('./assets/') if os.path.isfile(os.path.join('./assets/', f))]
+    folder_road_selection = road_selection.replace(
+        '/', '_').upper()  # to match folder naming
+    download_original_images()
+    original_images = [f for f in os.listdir(
+        './assets/') if os.path.isfile(os.path.join('./assets/', f))]
     jam_pred = []
 
     for path in os.listdir(os.path.join('./assets/', folder_road_selection)):
         fname, fext = os.path.splitext(path)
         if fext in ('.jpg', '.png'):
-            mask_fullpath = os.path.join('./assets', folder_road_selection, path)
+            mask_fullpath = os.path.join(
+                './assets', folder_road_selection, path)
             c_id = re.findall(r'\d{4}', fname)[0]
-            jam_pred.append(traffic_stats[(traffic_stats['Direction'] == road_selection) & (traffic_stats['Camera_Id'] == int(c_id))]['Jam'].values)
+            jam_pred.append(traffic_stats[(traffic_stats['Direction'] == road_selection) & (
+                traffic_stats['Camera_Id'] == int(c_id))]['Jam'].values)
 
             with image_columns[1]:
-                st.image(mask_fullpath, width=350, caption=f'Masked image for camera id: {c_id}')
+                st.image(mask_fullpath, width=350,
+                         caption=f'Masked image for camera id: {c_id}')
             with image_columns[0]:
                 r = re.compile(f'^{c_id}.*')
-                img_path = os.path.join('./assets', list(filter(r.match, original_images))[0])
+                img_path = os.path.join(
+                    './assets', list(filter(r.match, original_images))[0])
                 st.image(img_path, width=350, caption=f'Camera Id: {c_id}')
-    
+
     jam_status = "Jam" if sum(jam_pred) > len(jam_pred)//2 else "No Jam"
     jam_prediction_md = f"""<p style='text-align: center; font-size: 110%;'><b> Prediction: {jam_status} <b></p>
                         <p style='text-align: center; font-size: 90%'><em> Last updated at: ... <em></p>"""
@@ -54,12 +107,12 @@ with major_columns[0]:
 
 with major_columns[1]:
     m = plot_map(road_selection)
-    st.markdown("#") # to align the map lower
+    st.markdown("#")  # to align the map lower
     st.markdown("#")
     folium_static(m, width=500, height=400)
     st.markdown("<p style='text-align: center; font-size: 90%'><em> Hover over the markers to view the camera id <em></p>", unsafe_allow_html=True)
-    
-    
+
+
 # styling below
 style = """
     <style>
