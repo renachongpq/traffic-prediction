@@ -3,15 +3,16 @@ services:
   web1:
     build: ./backend/src
     container_name: backend
-    ports: 
+    ports:
       - "9001:5000"
     volumes:
       - /app
   web2:
     build: ./frontend
     container_name: frontend
-    ports: 
+    ports:
       - "8501:8501"
     volumes:
       - /app
+
 #To make changes must delete dsa3101-2210-13-lta_web1/dsa3101-2210-13-lta_web2 under images
