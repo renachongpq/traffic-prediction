@@ -34,7 +34,7 @@ def fetch_traffic_stats(flask_url):
         return None
 
 
-def download_original_images():
+def download_assets():
     try:
         response = requests.get(f'{flask_url}/assets')
         if response.status_code == 200:
@@ -77,7 +77,7 @@ with major_columns[0]:
     # display traffic images
     folder_road_selection = road_selection.replace(
         '/', '_').upper()  # to match folder naming
-    download_original_images()
+    download_assets()
     original_images = [f for f in os.listdir(
         './assets/') if os.path.isfile(os.path.join('./assets/', f))]
     jam_pred = []
@@ -88,7 +88,7 @@ with major_columns[0]:
             mask_fullpath = os.path.join(
                 './assets', folder_road_selection, path)
             c_id = re.findall(r'\d{4}', fname)[0]
-            jam_pred.append(traffic_stats[(traffic_stats['Direction'] == road_selection) & (
+            jam_pred.extend(traffic_stats[(traffic_stats['Direction'] == road_selection) & (
                 traffic_stats['Camera_Id'] == int(c_id))]['Jam'].values)
 
             with image_columns[1]:
