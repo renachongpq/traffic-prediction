@@ -20,9 +20,18 @@ class ApiCall:
         # folder where data retrieve are stored
         self.folder = os.path.join(self.parent_dir, "assets")
         if os.path.isdir(self.folder):
-            # clear old data from folder before making api call
-            shutil.rmtree(self.folder)
-        os.makedirs(self.folder)
+            # Clear old data from the folder before making the API call
+            self.clear_assets_folder()
+        else:
+            os.makedirs(self.folder)
+
+    def clear_assets_folder(self):
+        # Remove all files and subdirectories from the assets folder
+        for root, dirs, files in os.walk(self.folder, topdown=False):
+            for file in files:
+                os.remove(os.path.join(root, file))
+            for dir in dirs:
+                shutil.rmtree(os.path.join(root, dir))
 
     def api_get_json(self, uri, path):
         """
