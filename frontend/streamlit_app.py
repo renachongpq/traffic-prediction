@@ -8,14 +8,17 @@ import requests
 import time
 import zipfile
 import io
+from datetime import datetime
 
 # to run this page: streamlit run streamlit_app.py
 st.set_page_config(layout="wide")
 
 flask_url = "http://backend:5000"
 
-# ----------------------- csv files ---------------------------
-road_camera_id = pd.read_csv('./utils/road_camera_id.csv')
+# ----------------------- Helper functions ---------------------------
+
+# Store the last update time
+last_update_time = None
 
 
 def fetch_traffic_stats(flask_url):
@@ -35,6 +38,7 @@ def fetch_traffic_stats(flask_url):
 
 
 def download_assets():
+    global last_update_time
     try:
         response = requests.get(f'{flask_url}/assets')
         if response.status_code == 200:
@@ -45,6 +49,8 @@ def download_assets():
             with zipfile.ZipFile("assets.zip", "r") as zip_ref:
                 zip_ref.extractall("assets")
             st.success("Original images downloaded and extracted successfully.")
+            # Update the last update time
+            last_update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             st.error(
                 f"Failed to download original images. Status code: {response.status_code}")
@@ -52,32 +58,11 @@ def download_assets():
         st.error(f"Error downloading original images: {str(e)}")
 
 
-# Fetch traffic stats with retries
-traffic_stats = fetch_traffic_stats(flask_url)
-
-if traffic_stats is None:
-    st.error("Failed to fetch traffic stats. Please try again later.")
-
-# -------------------------------------------------------------
-
-st.sidebar.title('Traffic Prediction')
-
-project_description = """ <p> Based on live data from LTA Datamall, we display live traffic images of expressways. </p> 
-                    <p> Try it out by selecting a road direction you would like to view! </p> """
-st.sidebar.markdown(project_description, unsafe_allow_html=True)
-
-major_columns = st.columns((12, 8), gap='large')
-
-with major_columns[0]:
-    roads = road_camera_id['road_direction'].values.tolist()
-    road_selection = st.selectbox("**Road Direction**", roads, index=0,
-                                  placeholder='Select road direction to view traffic images')
+def display_traffic_images_and_predictions(road_selection, traffic_stats):
     image_columns = st.columns(2)
 
-    # display traffic images
-    folder_road_selection = road_selection.replace(
-        '/', '_').upper()  # to match folder naming
-    download_assets()
+    # Display traffic images and predictions
+    folder_road_selection = road_selection.replace('/', '_').upper()
     original_images = [f for f in os.listdir(
         './assets/') if os.path.isfile(os.path.join('./assets/', f))]
     jam_pred = []
@@ -101,9 +86,50 @@ with major_columns[0]:
                 st.image(img_path, width=350, caption=f'Camera Id: {c_id}')
 
     jam_status = "Jam" if sum(jam_pred) > len(jam_pred)//2 else "No Jam"
-    jam_prediction_md = f"""<p style='text-align: center; font-size: 110%;'><b> Prediction: {jam_status} <b></p>
-                        <p style='text-align: center; font-size: 90%'><em> Last updated at: ... <em></p>"""
+    jam_prediction_md = f"""<p style='text-align: center; font-size: 110%;'><b> Prediction: {jam_status} <b></p>"""
     st.markdown(jam_prediction_md, unsafe_allow_html=True)
+    if last_update_time:
+        last_updated_html = f"""<p style='text-align: center; font-size: 90%'><em> Last updated at: {last_update_time} <em></p>"""
+        st.markdown(last_updated_html, unsafe_allow_html=True)
+    else:
+        st.markdown(
+            "<p style='text-align: center; font-size: 90%'><em> Last updated at: Not available <em></p>", unsafe_allow_html=True)
+
+
+# ----------------------- csv files ---------------------------
+road_camera_id = pd.read_csv('./utils/road_camera_id.csv')
+
+
+# Fetch traffic stats with retries
+traffic_stats = fetch_traffic_stats(flask_url)
+
+if traffic_stats is None:
+    st.error("Failed to fetch traffic stats. Please try again later.")
+
+download_assets()
+
+# ----------------------- sidebar ---------------------------
+
+st.sidebar.title('Traffic Prediction')
+
+project_description = """ <p> Based on live data from LTA Datamall, we display live traffic images of expressways. </p> 
+                    <p> Try it out by selecting a road direction you would like to view! </p> """
+st.sidebar.markdown(project_description, unsafe_allow_html=True)
+
+if st.sidebar.button("Refresh Assets"):
+    download_assets()
+
+# ----------------------- main ---------------------------
+
+major_columns = st.columns((12, 8), gap='large')
+
+with major_columns[0]:
+    roads = road_camera_id['road_direction'].values.tolist()
+    road_selection = st.selectbox("**Road Direction**", roads, index=0,
+                                  placeholder='Select road direction to view traffic images')
+
+    # Call the function to display traffic images and predictions
+    display_traffic_images_and_predictions(road_selection, traffic_stats)
 
 with major_columns[1]:
     m = plot_map(road_selection)
