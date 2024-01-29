@@ -1,11 +1,10 @@
 from flask import Flask, jsonify, request, send_file
 import pandas as pd
 import os
-from backend.main import Main
+from main import Main
 import time
 import datetime
 import pickle
-from api_calls import ApiCall
 import json
 import urllib
 import urllib.request
