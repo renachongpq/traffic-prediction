@@ -13,11 +13,12 @@ class VehicleCount:
     def __init__(self, weights, images, image_roi_df, cam_lat_long, dir):
         self.images_dir = images
         self.images = [os.path.join(self.images_dir, image)
-                       for image in os.listdir(self.images_dir)]
+                       for image in os.listdir(self.images_dir) if image.endswith(".jpg")]
         self.image_roi_df = pd.read_csv(image_roi_df)
         self.cam_lat_long = pd.read_csv(cam_lat_long)
         self.model = YOLO(weights)
         self.dir = dir
+        self.model.fuse()
 
     def __roi(self, img, coords):
         x = int(img.shape[1])
