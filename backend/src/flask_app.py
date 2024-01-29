@@ -13,6 +13,7 @@ import httplib2 as http  # external library
 from io import BytesIO
 import zipfile
 import threading
+import schedule
 
 app = Flask(__name__)
 
@@ -41,14 +42,14 @@ def return_live_image():
 
 
 @app.route("/assets", methods=["GET"])
-def return_original_images():
-    images = f'./assets'
-    img_paths = [os.path.join(images, image) for image in os.listdir(
-        images)]
+def return_assets():
+    images = './assets'
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-        for img_path in img_paths:
-            zip_file.write(img_path, os.path.basename(img_path))
+        for root, _, files in os.walk(images):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zip_file.write(file_path, os.path.relpath(file_path, images))
 
     zip_buffer.seek(0)
 
@@ -136,15 +137,12 @@ def make_prediction():
 @app.route("/")
 def run_main():
     main = Main()
-    while True:
-        startTime = datetime.datetime.now()
-        print(f'{startTime}: Updating traffic stats...')
-        main.update_stats()
-        print(
-            f'Stats updated. Time taken: {datetime.datetime.now() - startTime} minutes')
-        print('Resting for 15 minutes...')
-        time_wait = 15
-        time.sleep(time_wait * 60)
+    startTime = datetime.datetime.now()
+    print(f'{startTime}: Updating traffic stats...')
+    main.update_stats()
+    print(
+        f'Stats updated. Time taken: {datetime.datetime.now() - startTime} minutes')
+    print('Resting for 5 minutes...')
 
 
 """
@@ -154,7 +152,7 @@ def get_incidents():
     return jsonify(traffic_incidents.to_dict(orient="records"))
 """
 
-
+"""
 def start_run_main_thread():
     run_main_thread = threading.Thread(target=run_main)
     # Daemonize the thread so it stops when the main program exits
@@ -164,6 +162,32 @@ def start_run_main_thread():
 
 # Start run_main() in a separate thread
 start_run_main_thread()
+
+# Define the function to execute run_main
+
+"""
+
+
+def run_main_job():
+    print("Running run_main job...")
+    run_main()
+
+
+run_main_job()
+
+# Schedule the run_main_job function to run every 15 minutes
+schedule.every(5).minutes.do(run_main_job)
+
+
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+# Start the scheduler in a separate thread
+scheduler_thread = threading.Thread(target=run_scheduler)
+scheduler_thread.start()
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
