@@ -12,8 +12,18 @@ from urllib.parse import urlparse
 import httplib2 as http  # external library
 from io import BytesIO
 import zipfile
+import threading
 
 app = Flask(__name__)
+
+
+def wait_for_file(file_path, timeout=60):
+    start_time = time.time()
+    while not os.path.exists(file_path):
+        if time.time() - start_time > timeout:
+            return False
+        time.sleep(1)
+    return True
 
 
 @app.route("/live_image", methods=["GET"])
@@ -30,6 +40,21 @@ def return_live_image():
 # to be updated when finalised
 
 
+@app.route("/assets", methods=["GET"])
+def return_original_images():
+    images = f'./assets'
+    img_paths = [os.path.join(images, image) for image in os.listdir(
+        images)]
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for img_path in img_paths:
+            zip_file.write(img_path, os.path.basename(img_path))
+
+    zip_buffer.seek(0)
+
+    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, download_name="assets.zip")
+
+
 @app.route("/roi_image", methods=["GET"])
 def return_roi_image(road_direction):
     road_direction = road_direction.replace("/", "_")
@@ -43,7 +68,7 @@ def return_roi_image(road_direction):
 
     zip_buffer.seek(0)
 
-    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, attachment_filename=f"{road_direction}_images.zip")
+    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, download_name=f"{road_direction}_images.zip")
 
 
 @app.route("/roi_jam_info", methods=["GET"])
@@ -59,7 +84,16 @@ def return_roi_jam_info(road_direction):
 
     zip_buffer.seek(0)
 
-    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, attachment_filename=f"{road_direction}_texts.zip")
+    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, download_name=f"{road_direction}_texts.zip")
+
+
+@app.route("/traffic_stats", methods=["GET"])
+def return_traffic_stats():
+    stats = './traffic_stats.csv'
+    if wait_for_file(stats):
+        return send_file(stats, as_attachment=True)
+    else:
+        return "Timeout: CSV file not found", 404
 
 
 """
@@ -119,6 +153,17 @@ def get_incidents():
     traffic_incidents = pd.read_csv('./assets/incidents.csv')
     return jsonify(traffic_incidents.to_dict(orient="records"))
 """
+
+
+def start_run_main_thread():
+    run_main_thread = threading.Thread(target=run_main)
+    # Daemonize the thread so it stops when the main program exits
+    run_main_thread.daemon = True
+    run_main_thread.start()
+
+
+# Start run_main() in a separate thread
+start_run_main_thread()
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
