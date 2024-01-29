@@ -1,13 +1,16 @@
 version: "3.9"
 services:
-  web1:
+  backend:
+    depends_on:
+      - frontend
     build: ./backend/src
     container_name: backend
     ports:
       - "9001:5000"
     volumes:
       - /app
-  web2:
+
+  frontend:
     build: ./frontend
     container_name: frontend
     ports:
